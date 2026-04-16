@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visualizador de Ordenação</title>
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg: #09090f; --surface: #0f0f1c; --border: #1c1c2e;
+    --accent: #00f5a0; --blue: #00c8ff; --red: #ff6b6b; --yellow: #ffd700;
+    --text: #dcdcf0; --muted: #5a5a7a;
+    --mono: 'Courier New', monospace;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--mono); min-height: 100vh; }
+  header {
+    padding: 1.2rem 2rem; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+  }
+  header h1 { font-size: 1rem; color: var(--accent); letter-spacing: 0.05em; }
+  .controls { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+  .btn {
+    padding: 0.5rem 1.1rem; font-family: var(--mono); font-size: 0.72rem;
+    border: 1px solid var(--border); background: transparent; color: var(--muted);
+    cursor: pointer; transition: all 0.2s; letter-spacing: 0.05em;
+  }
+  .btn:hover { color: var(--accent); border-color: var(--accent); }
+  .btn.active { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+  .btn.run { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+  .btn.run:disabled { opacity: 0.4; cursor: not-allowed; }
+  select {
+    padding: 0.5rem 0.8rem; font-family: var(--mono); font-size: 0.72rem;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    cursor: pointer;
+  }
+  label { font-size: 0.7rem; color: var(--muted); }
+  input[type=range] { accent-color: var(--accent); cursor: pointer; width: 80px; }
+  main { padding: 2rem; }
+  .info-bar {
+    display: flex; gap: 2rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+  }
+  .info-item { font-size: 0.72rem; color: var(--muted); }
+  .info-item span { color: var(--accent); font-size: 0.85rem; }
+  #canvas-area {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 1.5rem 1.5rem 0.5rem;
+    display: flex; align-items: flex-end; gap: 3px;
+    height: 280px; overflow: hidden;
+  }
+  .bar {
+    flex: 1; background: var(--blue); border-radius: 2px 2px 0 0;
+    transition: height 0.05s;
+    position: relative;
+    min-width: 4px;
+  }
+  .bar.comparing { background: var(--yellow); }
+  .bar.swapping   { background: var(--red); }
+  .bar.sorted     { background: var(--accent); }
+  .legend {
+    display: flex; gap: 1.5rem; margin-top: 1rem; flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.68rem; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+  .log-box {
+    margin-top: 1.5rem;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 1rem; height: 100px; overflow-y: auto;
+    font-size: 0.68rem; color: var(--muted); line-height: 1.8;
+  }
+  .log-box .ok  { color: var(--accent); }
+  .log-box .cmp { color: var(--yellow); }
+  .log-box .swp { color: var(--red); }
+</style>
+</head>
+<body>
+<header>
+  <h1>▶ Visualizador de Ordenação</h1>
+  <div class="controls">
+    <select id="algoSelect">
+      <option value="bubble">Bubble Sort — O(n²)</option>
+      <option value="selection">Selection Sort — O(n²)</option>
+      <option value="insertion">Insertion Sort — O(n²)</option>
+    </select>
+    <label>Velocidade: <input type="range" id="speedRange" min="10" max="300" value="80"></label>
+    <label>Tamanho: <input type="range" id="sizeRange" min="10" max="60" value="30"></label>
+    <button class="btn" onclick="generateArray()">↺ Novo Array</button>
+    <button class="btn run" id="runBtn" onclick="runSort()">▶ Ordenar</button>
+  </div>
+</header>
+<main>
+  <div class="info-bar">
+    <div class="info-item">Comparações: <span id="cmpCount">0</span></div>
+    <div class="info-item">Trocas: <span id="swpCount">0</span></div>
+    <div class="info-item">Tempo: <span id="timeElapsed">0ms</span></div>
+    <div class="info-item">Algoritmo: <span id="algoLabel">Bubble Sort</span></div>
+  </div>
+  <div id="canvas-area"></div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#00c8ff"></div>Normal</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ffd700"></div>Comparando</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff6b6b"></div>Trocando</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00f5a0"></div>Ordenado</div>
+  </div>
+  <div class="log-box" id="logBox"><span class="ok">// Clique em "Ordenar" para iniciar a visualização...</span></div>
+</main>
+
+<script>
+let arr = [], running = false, comparisons = 0, swaps = 0, startTime = 0;
+
+function generateArray() {
+  if (running) return;
+  const n = +document.getElementById('sizeRange').value;
+  arr = Array.from({length: n}, () => Math.floor(Math.random() * 90) + 10);
+  comparisons = 0; swaps = 0;
+  document.getElementById('cmpCount').textContent = 0;
+  document.getElementById('swpCount').textContent = 0;
+  document.getElementById('timeElapsed').textContent = '0ms';
+  renderBars(arr, [], [], []);
+  log('// Novo array gerado: [' + arr.slice(0,6).join(', ') + (arr.length>6 ? '...' : '') + ']', 'ok');
+}
+
+function renderBars(a, comparing=[], swapping=[], sorted=[]) {
+  const area = document.getElementById('canvas-area');
+  const maxH = 240;
+  const maxVal = Math.max(...a);
+  area.innerHTML = a.map((v, i) => {
+    let cls = 'bar';
+    if (sorted.includes(i)) cls += ' sorted';
+    else if (swapping.includes(i)) cls += ' swapping';
+    else if (comparing.includes(i)) cls += ' comparing';
+    const h = Math.max(8, Math.round((v / maxVal) * maxH));
+    return `<div class="${cls}" style="height:${h}px" title="${v}"></div>`;
+  }).join('');
+}
+
+function log(msg, cls='') {
+  const box = document.getElementById('logBox');
+  box.innerHTML += `<div class="${cls}">${msg}</div>`;
+  box.scrollTop = box.scrollHeight;
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function runSort() {
+  if (running) return;
+  if (!arr.length) generateArray();
+  running = true;
+  comparisons = 0; swaps = 0;
+  document.getElementById('runBtn').disabled = true;
+  startTime = Date.now();
+  const algo = document.getElementById('algoSelect').value;
+  document.getElementById('algoLabel').textContent = document.getElementById('algoSelect').selectedOptions[0].text.split('—')[0].trim();
+  log('// Iniciando ' + algo + ' sort...', 'ok');
+
+  if (algo === 'bubble')    await bubbleSort();
+  if (algo === 'selection') await selectionSort();
+  if (algo === 'insertion') await insertionSort();
+
+  const t = Date.now() - startTime;
+  document.getElementById('timeElapsed').textContent = t + 'ms';
+  renderBars(arr, [], [], arr.map((_,i)=>i));
+  log(`// ✓ Concluído! Comparações: ${comparisons} | Trocas: ${swaps} | Tempo: ${t}ms`, 'ok');
+  running = false;
+  document.getElementById('runBtn').disabled = false;
+}
+
+function getSpeed() { return 310 - +document.getElementById('speedRange').value; }
+
+async function bubbleSort() {
+  const a = [...arr], n = a.length;
+  for (let i = 0; i < n - 1; i++) {
+    for (let j = 0; j < n - i - 1; j++) {
+      comparisons++;
+      document.getElementById('cmpCount').textContent = comparisons;
+      renderBars(a, [j, j+1], [], a.map((_,k)=>k>=n-i?k:null).filter(x=>x!==null));
+      await delay(getSpeed());
+      if (a[j] > a[j+1]) {
+        swaps++;
+        document.getElementById('swpCount').textContent = swaps;
+        renderBars(a, [], [j, j+1], []);
+        [a[j], a[j+1]] = [a[j+1], a[j]];
+        arr = [...a];
+        await delay(getSpeed() * 0.5);
+        if (swaps % 5 === 0) log(`// Troca: posição ${j} ↔ ${j+1}`, 'swp');
+      }
+    }
+  }
+  arr = a;
+}
+
+async function selectionSort() {
+  const a = [...arr], n = a.length;
+  for (let i = 0; i < n - 1; i++) {
+    let minIdx = i;
+    for (let j = i + 1; j < n; j++) {
+      comparisons++;
+      document.getElementById('cmpCount').textContent = comparisons;
+      renderBars(a, [j, minIdx], [], a.map((_,k)=>k<i?k:null).filter(x=>x!==null));
+      await delay(getSpeed());
+      if (a[j] < a[minIdx]) minIdx = j;
+    }
+    if (minIdx !== i) {
+      swaps++;
+      document.getElementById('swpCount').textContent = swaps;
+      renderBars(a, [], [i, minIdx], []);
+      [a[i], a[minIdx]] = [a[minIdx], a[i]];
+      arr = [...a];
+      await delay(getSpeed());
+      log(`// Mínimo encontrado: ${a[i]} → posição ${i}`, 'cmp');
+    }
+  }
+  arr = a;
+}
+
+async function insertionSort() {
+  const a = [...arr], n = a.length;
+  for (let i = 1; i < n; i++) {
+    const key = a[i];
+    let j = i - 1;
+    while (j >= 0 && a[j] > key) {
+      comparisons++;
+      document.getElementById('cmpCount').textContent = comparisons;
+      swaps++;
+      document.getElementById('swpCount').textContent = swaps;
+      renderBars(a, [j, j+1], [], a.map((_,k)=>k<i?k:null).filter(x=>x!==null));
+      a[j + 1] = a[j];
+      arr = [...a];
+      await delay(getSpeed());
+      j--;
+    }
+    a[j + 1] = key;
+    arr = [...a];
+    renderBars(a, [j+1], [], []);
+    await delay(getSpeed() * 0.5);
+    if (i % 4 === 0) log(`// Inserindo ${key} na posição ${j+1}`, 'cmp');
+  }
+  arr = a;
+}
+
+generateArray();
+</script>
+</body>
+</html>

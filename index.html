@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gabriel Cardoso — Dev Jr.</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-topbar">
+      <div class="modal-title-area">
+        <span class="modal-num" id="modalNum">001</span>
+        <span class="modal-name" id="modalName">Projeto</span>
+      </div>
+      <div class="modal-tabs">
+        <button class="modal-tab active" id="tabPreview" onclick="switchTab('preview')">▶ Preview</button>
+        <button class="modal-tab" id="tabCode" onclick="switchTab('code')">{ } Código</button>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-panel" id="panelPreview">
+        <iframe id="previewFrame" frameborder="0"></iframe>
+      </div>
+      <div class="modal-panel hidden" id="panelCode">
+        <div class="code-toolbar">
+          <span id="codeFilename">projeto.html</span>
+          <button onclick="copyCode()">Copiar</button>
+        </div>
+        <pre class="code-viewer" id="codeViewer"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="navbar">
+  <div class="nav-logo">gcardoso<span>.dev</span></div>
+  <div class="nav-links">
+    <a href="#skills">Skills</a>
+    <a href="#estruturas">Estruturas</a>
+    <a href="#projetos">Projetos</a>
+    <a href="#logica">Lógica</a>
+    <a href="#contato">Contato</a>
+  </div>
+  <div class="nav-hamburger" id="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+<div class="nav-mobile" id="navMobile">
+  <a href="#skills" onclick="toggleMenu()">Skills</a>
+  <a href="#estruturas" onclick="toggleMenu()">Estruturas</a>
+  <a href="#projetos" onclick="toggleMenu()">Projetos</a>
+  <a href="#logica" onclick="toggleMenu()">Lógica</a>
+  <a href="#contato" onclick="toggleMenu()">Contato</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>disponível para estágio
+    </div>
+    <h1 class="hero-name">
+      Gabriel<br>
+      <span class="outline">Cardoso </span><span class="accent-text">Alves</span>
+    </h1>
+    <p class="hero-role"><span class="prompt">$ </span>whoami → Programador Jr. buscando estágio</p>
+    <p class="hero-desc">Apaixonado por código limpo, algoritmos eficientes e soluções elegantes. Buscando oportunidade de estágio para transformar lógica em produto real.</p>
+    <div class="hero-cta">
+      <a href="#projetos" class="btn-primary">Ver Projetos ↓</a>
+      <a href="#contato" class="btn-secondary">Entre em Contato</a>
+    </div>
+  </div>
+  <div class="hero-terminal">
+    <div class="terminal-header">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+      <span class="terminal-path">~/gabriel</span>
+    </div>
+    <div class="terminal-body">
+      <div class="terminal-line">
+        <span class="t-green">gabriel@dev</span><span class="t-blue">:~$</span>
+        <span class="t-white" id="typedText"></span><span class="blink-cursor" id="termCursor"></span>
+      </div>
+      <div id="termOutput"></div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills">
+  <div class="section-label">01 — Linguagens</div>
+  <h2 class="section-title">Stack Técnica</h2>
+  <div class="skills-grid reveal">
+    <div class="skill-card">
+      <div class="skill-icon">🌐</div>
+      <div class="skill-name">HTML5</div>
+      <div class="skill-level">SEMÂNTICO · ACESSÍVEL · FORMS</div>
+      <div class="skill-bar"><div class="skill-fill" data-w="0.88"></div></div>
+      <p class="skill-detail">Estruturação semântica, formulários, acessibilidade (ARIA), SEO básico e boas práticas de marcação.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-icon">🎨</div>
+      <div class="skill-name">CSS3</div>
+      <div class="skill-level">FLEXBOX · GRID · ANIMAÇÕES</div>
+      <div class="skill-bar"><div class="skill-fill" data-w="0.80"></div></div>
+      <p class="skill-detail">Layouts responsivos com Flexbox e Grid, variáveis CSS, transições, keyframes e media queries.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-icon">⚡</div>
+      <div class="skill-name">JavaScript</div>
+      <div class="skill-level">ES6+ · DOM · ASYNC/AWAIT</div>
+      <div class="skill-bar"><div class="skill-fill" data-w="0.75"></div></div>
+      <p class="skill-detail">Manipulação do DOM, eventos, fetch API, localStorage, arrow functions, destructuring e classes.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-icon">🐍</div>
+      <div class="skill-name">Python</div>
+      <div class="skill-level">ALGORITMOS · OOP · SCRIPTS</div>
+      <div class="skill-bar"><div class="skill-fill" data-w="0.85"></div></div>
+      <p class="skill-detail">Estruturas de dados, algoritmos de ordenação/busca, programação orientada a objetos e scripts de automação.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ESTRUTURAS DE DADOS -->
+<section id="estruturas">
+  <div class="section-label">02 — Fundamentos</div>
+  <h2 class="section-title">Estruturas de Dados</h2>
+  <div class="ds-grid reveal">
+    <div class="ds-card">
+      <span class="ds-tag">LINEAR</span>
+      <div class="ds-name">Array &amp; Listas Ligadas</div>
+      <div class="ds-desc">Acesso indexado e inserção dinâmica. Base para listas encadeadas simples e duplamente encadeadas.</div>
+      <div class="ds-badges">
+        <span class="badge">Acesso O(1)</span>
+        <span class="badge">Busca O(n)</span>
+        <span class="badge">Insert O(1)*</span>
+      </div>
+    </div>
+    <div class="ds-card">
+      <span class="ds-tag">LIFO</span>
+      <div class="ds-name">Stack (Pilha)</div>
+      <div class="ds-desc">Estrutura LIFO com push/pop. Usada em recursão, avaliação de expressões e histórico de ações.</div>
+      <div class="ds-badges">
+        <span class="badge">Push O(1)</span>
+        <span class="badge">Pop O(1)</span>
+        <span class="badge">Peek O(1)</span>
+      </div>
+    </div>
+    <div class="ds-card">
+      <span class="ds-tag">FIFO</span>
+      <div class="ds-name">Queue (Fila)</div>
+      <div class="ds-desc">Estrutura FIFO com enqueue/dequeue. Essencial para BFS, sistemas de tarefas e buffers de dados.</div>
+      <div class="ds-badges">
+        <span class="badge">Enqueue O(1)</span>
+        <span class="badge">Dequeue O(1)</span>
+      </div>
+    </div>
+    <div class="ds-card">
+      <span class="ds-tag">HIERÁRQUICO</span>
+      <div class="ds-name">Árvore Binária (BST)</div>
+      <div class="ds-desc">Estrutura hierárquica com filhos esquerdo e direito. BST permite busca eficiente e ordenação natural.</div>
+      <div class="ds-badges">
+        <span class="badge">Busca O(log n)</span>
+        <span class="badge">Insert O(log n)</span>
+      </div>
+    </div>
+    <div class="ds-card">
+      <span class="ds-tag">KEY-VALUE</span>
+      <div class="ds-name">Hash Map / Dicionário</div>
+      <div class="ds-desc">Mapeamento chave-valor com acesso em tempo constante. Amplamente usado em caches e índices.</div>
+      <div class="ds-badges">
+        <span class="badge">Get O(1)</span>
+        <span class="badge">Set O(1)</span>
+        <span class="badge">Delete O(1)</span>
+      </div>
+    </div>
+    <div class="ds-card">
+      <span class="ds-tag">GRAFOS</span>
+      <div class="ds-name">BFS &amp; DFS</div>
+      <div class="ds-desc">Busca em largura e profundidade em grafos. Aplicações em rotas, redes sociais e dependências.</div>
+      <div class="ds-badges">
+        <span class="badge">BFS O(V+E)</span>
+        <span class="badge">DFS O(V+E)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJETOS -->
+<section id="projetos">
+  <div class="section-label">03 — Portfolio</div>
+  <h2 class="section-title">Projetos</h2>
+  <div class="projects-grid reveal">
+
+    <div class="project-card" onclick="openProject(0)">
+      <div class="project-header">
+        <span class="project-num">001</span>
+        <div class="project-langs">
+          <span class="lang lang-html">HTML</span>
+          <span class="lang lang-css">CSS</span>
+          <span class="lang lang-js">JS</span>
+        </div>
+      </div>
+      <div class="project-body">
+        <div class="project-title">Visualizador de Ordenação</div>
+        <div class="project-desc">Animação visual dos algoritmos Bubble Sort e Quick Sort com barras coloridas. Mostra cada passo de comparação em tempo real.</div>
+        <div class="project-snippet">
+          <span class="sn-kw">function</span> <span class="sn-fn">bubbleSort</span>(arr) {<br>
+          &nbsp;&nbsp;<span class="sn-kw">for</span> (<span class="sn-kw">let</span> i = <span class="sn-num">0</span>; i &lt; arr.length; i++)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;swap(arr[j], arr[j+<span class="sn-num">1</span>]); <span class="sn-cm">// O(n²)</span>
+        </div>
+        <div class="project-cta">
+          <span class="cta-hint">clique para ver o projeto completo →</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-card" onclick="openProject(1)">
+      <div class="project-header">
+        <span class="project-num">002</span>
+        <div class="project-langs">
+          <span class="lang lang-html">HTML</span>
+          <span class="lang lang-css">CSS</span>
+          <span class="lang lang-js">JS</span>
+        </div>
+      </div>
+      <div class="project-body">
+        <div class="project-title">To-Do App</div>
+        <div class="project-desc">Gerenciador de tarefas com localStorage, filtros por status e animações. Arquitetura MVC em JS puro.</div>
+        <div class="project-snippet">
+          <span class="sn-kw">class</span> <span class="sn-fn">TodoApp</span> {<br>
+          &nbsp;&nbsp;<span class="sn-fn">constructor</span>() {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="sn-kw">this</span>.tasks = <span class="sn-fn">JSON.parse</span>(<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;localStorage.getItem(<span class="sn-str">'tasks'</span>) || <span class="sn-str">'[]'</span>);
+        </div>
+        <div class="project-cta">
+          <span class="cta-hint">clique para ver o projeto completo →</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-card" onclick="openProject(2)">
+      <div class="project-header">
+        <span class="project-num">003</span>
+        <div class="project-langs">
+          <span class="lang lang-html">HTML</span>
+          <span class="lang lang-css">CSS</span>
+          <span class="lang lang-js">JS</span>
+        </div>
+      </div>
+      <div class="project-body">
+        <div class="project-title">Calculadora de Expressões</div>
+        <div class="project-desc">Parser de expressões usando pilha (Stack). Converte notação infixa para pós-fixa e avalia passo a passo.</div>
+        <div class="project-snippet">
+          <span class="sn-kw">function</span> <span class="sn-fn">evaluate</span>(expr) {<br>
+          &nbsp;&nbsp;<span class="sn-kw">const</span> stack = [];<br>
+          &nbsp;&nbsp;b = stack.<span class="sn-fn">pop</span>(); a = stack.<span class="sn-fn">pop</span>();<br>
+          &nbsp;&nbsp;stack.<span class="sn-fn">push</span>(ops[op](a, b));
+        </div>
+        <div class="project-cta">
+          <span class="cta-hint">clique para ver o projeto completo →</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-card" onclick="openProject(3)">
+      <div class="project-header">
+        <span class="project-num">004</span>
+        <div class="project-langs">
+          <span class="lang lang-html">HTML</span>
+          <span class="lang lang-css">CSS</span>
+          <span class="lang lang-js">JS</span>
+        </div>
+      </div>
+      <div class="project-body">
+        <div class="project-title">Quiz de Algoritmos</div>
+        <div class="project-desc">Quiz interativo sobre estruturas de dados e Big-O. Timer, pontuação, feedback visual e resultado final.</div>
+        <div class="project-snippet">
+          <span class="sn-kw">const</span> checkAnswer = (sel) => {<br>
+          &nbsp;&nbsp;score += sel === correct ? <span class="sn-num">10</span> : <span class="sn-num">0</span>;<br>
+          &nbsp;&nbsp;<span class="sn-fn">showFeedback</span>(sel === correct);<br>
+          &nbsp;&nbsp;<span class="sn-fn">nextQuestion</span>();
+        </div>
+        <div class="project-cta">
+          <span class="cta-hint">clique para ver o projeto completo →</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- LÓGICA -->
+<section id="logica">
+  <div class="section-label">04 — Raciocínio</div>
+  <h2 class="section-title">Lógica de Programação</h2>
+  <div class="logic-grid reveal">
+    <div class="logic-card">
+      <div class="logic-title">Fibonacci <span class="logic-tag">Memoização</span></div>
+      <div class="logic-desc">Reduz complexidade de O(2ⁿ) para O(n) armazenando subproblemas já resolvidos.</div>
+      <pre class="logic-code"><span class="sn-kw">def</span> <span class="sn-fn">fib</span>(n, memo={}):
+  <span class="sn-kw">if</span> n <span class="sn-kw">in</span> memo: <span class="sn-kw">return</span> memo[n]
+  <span class="sn-kw">if</span> n &lt;= <span class="sn-num">1</span>: <span class="sn-kw">return</span> n
+  memo[n] = <span class="sn-fn">fib</span>(n-<span class="sn-num">1</span>) + <span class="sn-fn">fib</span>(n-<span class="sn-num">2</span>)
+  <span class="sn-kw">return</span> memo[n]</pre>
+    </div>
+    <div class="logic-card">
+      <div class="logic-title">FizzBuzz <span class="logic-tag">Clássico</span></div>
+      <div class="logic-desc">Condicional múltipla com operador módulo. Base do raciocínio lógico estruturado.</div>
+      <pre class="logic-code"><span class="sn-kw">for</span> i <span class="sn-kw">in</span> <span class="sn-fn">range</span>(<span class="sn-num">1</span>, <span class="sn-num">101</span>):
+  <span class="sn-kw">if</span>   i % <span class="sn-num">15</span> == <span class="sn-num">0</span>: <span class="sn-fn">print</span>(<span class="sn-str">"FizzBuzz"</span>)
+  <span class="sn-kw">elif</span> i % <span class="sn-num">3</span>  == <span class="sn-num">0</span>: <span class="sn-fn">print</span>(<span class="sn-str">"Fizz"</span>)
+  <span class="sn-kw">elif</span> i % <span class="sn-num">5</span>  == <span class="sn-num">0</span>: <span class="sn-fn">print</span>(<span class="sn-str">"Buzz"</span>)
+  <span class="sn-kw">else</span>:              <span class="sn-fn">print</span>(i)</pre>
+    </div>
+    <div class="logic-card">
+      <div class="logic-title">Palíndromo <span class="logic-tag">String</span></div>
+      <div class="logic-desc">Verificação com slice invertido do Python. Ignora espaços e diferença de maiúsculas.</div>
+      <pre class="logic-code"><span class="sn-kw">def</span> <span class="sn-fn">is_palindrome</span>(s):
+  s = s.<span class="sn-fn">lower</span>().<span class="sn-fn">replace</span>(<span class="sn-str">' '</span>, <span class="sn-str">''</span>)
+  <span class="sn-kw">return</span> s == s[::<span class="sn-num">-1</span>]
+
+<span class="sn-cm"># "arara"  → True</span>
+<span class="sn-cm"># "python" → False</span></pre>
+    </div>
+    <div class="logic-card">
+      <div class="logic-title">Binary Search <span class="logic-tag">O(log n)</span></div>
+      <div class="logic-desc">Divisão e conquista em array ordenado. Muito mais rápida que busca linear O(n).</div>
+      <pre class="logic-code"><span class="sn-kw">def</span> <span class="sn-fn">binary_search</span>(arr, target):
+  lo, hi = <span class="sn-num">0</span>, len(arr) - <span class="sn-num">1</span>
+  <span class="sn-kw">while</span> lo &lt;= hi:
+    mid = (lo + hi) // <span class="sn-num">2</span>
+    <span class="sn-kw">if</span> arr[mid] == target: <span class="sn-kw">return</span> mid
+    <span class="sn-kw">elif</span> arr[mid] &lt; target: lo = mid+<span class="sn-num">1</span>
+    <span class="sn-kw">else</span>: hi = mid-<span class="sn-num">1</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- CONTATO -->
+<section id="contato">
+  <div class="contact-inner reveal">
+    <div class="section-label" style="justify-content:center">05 — Contato</div>
+    <h2 class="contact-title">Vamos construir<br>algo <span class="accent-text">juntos?</span></h2>
+    <p class="contact-sub">Estou disponível para estágio e aberto a conversas. Se você tem um projeto ou uma vaga, adoraria ouvir!</p>
+    <div class="contact-cards">
+      <a href="mailto:Gcardoso21AR@gmail.com" class="contact-card">
+        <div class="contact-card-icon">✉</div>
+        <div class="contact-card-label">E-mail</div>
+        <div class="contact-card-value">Gcardoso21AR@gmail.com</div>
+      </a>
+      <a href="tel:+5593991254015" class="contact-card">
+        <div class="contact-card-icon">📱</div>
+        <div class="contact-card-label">Telefone / WhatsApp</div>
+        <div class="contact-card-value">(93) 99125-4015</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span>© 2025 — <strong>Gabriel Cardoso Alves Rodrigues</strong></span>
+  <span>Feito com <strong>HTML · CSS · JS</strong> puro</span>
+</footer>
+
+<script src="js/projects-code.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

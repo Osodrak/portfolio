@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz de Algoritmos</title>
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#09090f; --surface:#0f0f1c; --card:#121220; --border:#1c1c2e;
+    --accent:#00f5a0; --blue:#00c8ff; --red:#ff6b6b; --yellow:#ffd700;
+    --text:#dcdcf0; --muted:#5a5a7a;
+    --mono:'Courier New', monospace; --sans:'Segoe UI', sans-serif;
+  }
+  body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; display:flex; flex-direction:column; }
+  header {
+    background:var(--surface); border-bottom:1px solid var(--border);
+    padding:1rem 2rem; display:flex; align-items:center; justify-content:space-between;
+  }
+  header h1 { font-family:var(--mono); font-size:0.9rem; color:var(--accent); }
+  .hud { display:flex; gap:1.5rem; align-items:center; }
+  .hud-item { font-family:var(--mono); font-size:0.7rem; color:var(--muted); }
+  .hud-item span { color:var(--text); }
+  .timer-bar-wrap { width:120px; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .timer-bar { height:100%; background:var(--accent); transition:width 1s linear; }
+  .timer-bar.danger { background:var(--red); }
+
+  main { flex:1; display:flex; align-items:center; justify-content:center; padding:2rem 1rem; }
+  .quiz-card { width:100%; max-width:680px; }
+
+  /* SPLASH */
+  #splash {
+    background:var(--surface); border:1px solid var(--border); padding:3rem 2.5rem;
+    text-align:center;
+  }
+  #splash h2 { font-family:var(--mono); font-size:1.4rem; color:var(--accent); margin-bottom:1rem; }
+  #splash p { font-size:0.88rem; color:var(--muted); line-height:1.7; margin-bottom:2rem; }
+  #splash .info-list { list-style:none; text-align:left; margin-bottom:2rem; background:var(--card); border:1px solid var(--border); padding:1.2rem 1.5rem; }
+  #splash .info-list li { font-size:0.8rem; color:var(--muted); padding:0.3rem 0; border-bottom:1px solid var(--border); }
+  #splash .info-list li:last-child { border-bottom:none; }
+  #splash .info-list li span { color:var(--accent); }
+
+  .start-btn {
+    display:inline-block; padding:0.9rem 2.5rem;
+    background:var(--accent); color:#09090f;
+    font-family:var(--mono); font-size:0.85rem; font-weight:700;
+    border:none; cursor:pointer; letter-spacing:0.1em;
+    transition:transform 0.2s;
+  }
+  .start-btn:hover { transform:translateY(-2px); }
+
+  /* QUESTION */
+  #questionPanel { display:none; }
+  .q-meta { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+  .q-num { font-family:var(--mono); font-size:0.68rem; color:var(--muted); }
+  .q-cat { font-family:var(--mono); font-size:0.62rem; padding:0.2rem 0.6rem; background:rgba(0,200,255,0.08); border:1px solid rgba(0,200,255,0.2); color:var(--blue); }
+  .progress-bar-wrap { width:100%; height:3px; background:var(--border); margin-bottom:1.5rem; }
+  .progress-bar { height:100%; background:var(--accent); transition:width 0.4s ease; }
+  .q-text {
+    font-size:1.05rem; font-weight:600; line-height:1.5; margin-bottom:0.8rem;
+    background:var(--surface); border:1px solid var(--border); padding:1.5rem;
+  }
+  .q-code {
+    font-family:var(--mono); font-size:0.7rem; background:var(--bg);
+    border:1px solid var(--border); padding:1rem; margin-bottom:1.5rem;
+    color:var(--muted); line-height:1.8; white-space:pre;
+  }
+  .options { display:flex; flex-direction:column; gap:0.6rem; }
+  .option {
+    padding:0.9rem 1.2rem; background:var(--card); border:1px solid var(--border);
+    cursor:pointer; font-size:0.88rem; transition:all 0.2s; text-align:left;
+    display:flex; align-items:center; gap:0.8rem;
+  }
+  .option:hover:not(.disabled) { border-color:var(--accent); background:rgba(0,245,160,0.04); }
+  .option .opt-letter {
+    font-family:var(--mono); font-size:0.7rem; color:var(--muted);
+    width:22px; height:22px; border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .option.correct { border-color:var(--accent); background:rgba(0,245,160,0.08); }
+  .option.correct .opt-letter { background:var(--accent); color:#09090f; border-color:var(--accent); }
+  .option.wrong { border-color:var(--red); background:rgba(255,107,107,0.08); }
+  .option.wrong .opt-letter { background:var(--red); color:#fff; border-color:var(--red); }
+  .option.disabled { cursor:default; opacity:0.6; }
+  .feedback-box {
+    margin-top:1rem; padding:1rem 1.2rem;
+    font-size:0.82rem; line-height:1.6; border-left:3px solid var(--accent);
+    background:rgba(0,245,160,0.04);
+    display:none;
+  }
+  .feedback-box.wrong-fb { border-color:var(--red); background:rgba(255,107,107,0.04); }
+  .next-btn {
+    margin-top:1.2rem; width:100%; padding:0.8rem;
+    background:var(--accent); color:#09090f;
+    font-family:var(--mono); font-size:0.8rem; font-weight:700;
+    border:none; cursor:pointer; letter-spacing:0.08em;
+    transition:transform 0.15s; display:none;
+  }
+  .next-btn:hover { transform:translateY(-1px); }
+
+  /* RESULT */
+  #resultPanel { display:none; text-align:center; }
+  .result-box { background:var(--surface); border:1px solid var(--border); padding:3rem 2rem; }
+  .result-score { font-family:var(--mono); font-size:3.5rem; color:var(--accent); font-weight:700; }
+  .result-label { font-size:0.75rem; color:var(--muted); margin-bottom:1rem; }
+  .result-title { font-size:1.4rem; font-weight:700; margin-bottom:0.8rem; }
+  .result-msg { font-size:0.88rem; color:var(--muted); margin-bottom:2rem; line-height:1.6; }
+  .result-stats { display:flex; gap:1rem; justify-content:center; margin-bottom:2rem; flex-wrap:wrap; }
+  .result-stat { background:var(--card); border:1px solid var(--border); padding:0.8rem 1.5rem; }
+  .result-stat-val { font-family:var(--mono); font-size:1.1rem; color:var(--text); }
+  .result-stat-lbl { font-size:0.65rem; color:var(--muted); margin-top:0.2rem; }
+  .retry-btn {
+    padding:0.8rem 2.2rem; background:transparent;
+    border:1px solid var(--accent); color:var(--accent);
+    font-family:var(--mono); font-size:0.78rem; cursor:pointer;
+    letter-spacing:0.08em; transition:all 0.2s;
+  }
+  .retry-btn:hover { background:rgba(0,245,160,0.08); }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ Quiz de Algoritmos & Estruturas</h1>
+  <div class="hud">
+    <div class="hud-item">Questão: <span id="hudQ">-</span></div>
+    <div class="hud-item">Pontos: <span id="hudScore">0</span></div>
+    <div class="hud-item">
+      <span id="hudTime">0s</span>
+      <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar"></div></div>
+    </div>
+  </div>
+</header>
+<main>
+<div class="quiz-card" id="quizCard">
+
+  <!-- SPLASH -->
+  <div id="splash">
+    <h2>// Quiz de Algoritmos</h2>
+    <p>Teste seus conhecimentos em estruturas de dados,<br>complexidade Big-O e lógica de programação.</p>
+    <ul class="info-list">
+      <li>📋 <span>10 questões</span> sobre algoritmos e estruturas de dados</li>
+      <li>⏱ <span>20 segundos</span> por questão</li>
+      <li>🏆 <span>10 pontos</span> por resposta certa, <span>+3 bônus</span> por rapidez</li>
+      <li>💡 Feedback explicativo em cada questão</li>
+    </ul>
+    <button class="start-btn" onclick="startQuiz()">▶ Iniciar Quiz</button>
+  </div>
+
+  <!-- QUESTION -->
+  <div id="questionPanel">
+    <div class="q-meta">
+      <span class="q-num" id="qNum">Questão 1 / 10</span>
+      <span class="q-cat" id="qCat">Big-O</span>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="q-text" id="qText"></div>
+    <div class="q-code" id="qCode" style="display:none"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback-box" id="feedback"></div>
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Próxima →</button>
+  </div>
+
+  <!-- RESULT -->
+  <div id="resultPanel">
+    <div class="result-box">
+      <div class="result-score" id="resultScore">0</div>
+      <div class="result-label">pontos</div>
+      <div class="result-title" id="resultTitle">Bom trabalho!</div>
+      <div class="result-msg" id="resultMsg"></div>
+      <div class="result-stats">
+        <div class="result-stat">
+          <div class="result-stat-val" id="rCorrect">0</div>
+          <div class="result-stat-lbl">Corretas</div>
+        </div>
+        <div class="result-stat">
+          <div class="result-stat-val" id="rWrong">0</div>
+          <div class="result-stat-lbl">Erradas</div>
+        </div>
+        <div class="result-stat">
+          <div class="result-stat-val" id="rTime">0s</div>
+          <div class="result-stat-lbl">Tempo Total</div>
+        </div>
+        <div class="result-stat">
+          <div class="result-stat-val" id="rPct">0%</div>
+          <div class="result-stat-lbl">Acertos</div>
+        </div>
+      </div>
+      <button class="retry-btn" onclick="restartQuiz()">↺ Jogar Novamente</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const QUESTIONS = [
+  {
+    cat: 'Big-O', text: 'Qual é a complexidade do Bubble Sort no pior caso?',
+    code: null,
+    opts: ['O(n)', 'O(n log n)', 'O(n²)', 'O(log n)'],
+    ans: 2,
+    explain: 'Bubble Sort compara cada par de elementos adjacentes repetidamente. No pior caso (array invertido) realiza n*(n-1)/2 comparações, resultando em O(n²).'
+  },
+  {
+    cat: 'Estruturas', text: 'Qual estrutura usa a política LIFO (Last In, First Out)?',
+    code: null,
+    opts: ['Queue (Fila)', 'Stack (Pilha)', 'Árvore Binária', 'Hash Map'],
+    ans: 1,
+    explain: 'Stack (Pilha) usa LIFO — o último elemento inserido é o primeiro a ser removido. Exemplos: pilha de chamadas de funções, histórico de undo.'
+  },
+  {
+    cat: 'Big-O', text: 'O que este código faz em termos de complexidade?',
+    code: `def search(arr, target):
+    for i in range(len(arr)):
+        if arr[i] == target:
+            return i
+    return -1`,
+    opts: ['O(1) — Constante', 'O(log n) — Logarítmica', 'O(n) — Linear', 'O(n²) — Quadrática'],
+    ans: 2,
+    explain: 'É uma busca linear. No pior caso, percorre todos os n elementos do array antes de encontrar o alvo ou retornar -1. Complexidade: O(n).'
+  },
+  {
+    cat: 'Estruturas', text: 'Qual é a complexidade média de acesso em um Hash Map?',
+    code: null,
+    opts: ['O(n)', 'O(log n)', 'O(n²)', 'O(1)'],
+    ans: 3,
+    explain: 'Hash Map usa uma função de hash para calcular diretamente o índice de armazenamento. Em média, o acesso é O(1). Colisões podem degradar para O(n) no pior caso.'
+  },
+  {
+    cat: 'Algoritmos', text: 'Qual algoritmo usa divisão e conquista para ordenar?',
+    code: null,
+    opts: ['Bubble Sort', 'Selection Sort', 'Merge Sort', 'Insertion Sort'],
+    ans: 2,
+    explain: 'Merge Sort divide o array ao meio recursivamente, ordena cada metade e depois mescla as partes ordenadas. Complexidade: O(n log n) em todos os casos.'
+  },
+  {
+    cat: 'Big-O', text: 'Qual a complexidade da busca em uma árvore BST balanceada?',
+    code: null,
+    opts: ['O(1)', 'O(log n)', 'O(n)', 'O(n log n)'],
+    ans: 1,
+    explain: 'Em uma BST balanceada, a busca descarta metade dos nós a cada nível. Com h = log n altura, a busca é O(log n). Em uma árvore degenerada, pode chegar a O(n).'
+  },
+  {
+    cat: 'Lógica', text: 'O que imprime este código Python?',
+    code: `resultado = [x**2 for x in range(5) if x % 2 == 0]
+print(resultado)`,
+    opts: ['[0, 4, 16]', '[1, 4, 9]', '[0, 1, 4, 9, 16]', '[4, 16]'],
+    ans: 0,
+    explain: 'List comprehension: pega x de 0 a 4, filtra os pares (0, 2, 4) e eleva ao quadrado. Resultado: [0², 2², 4²] = [0, 4, 16].'
+  },
+  {
+    cat: 'Estruturas', text: 'Qual estrutura é mais eficiente para implementar uma fila de prioridade?',
+    code: null,
+    opts: ['Array desordenado', 'Lista ligada', 'Heap (árvore)', 'Stack'],
+    ans: 2,
+    explain: 'Heap (min-heap ou max-heap) permite inserção e remoção do elemento prioritário em O(log n). É a base para o algoritmo de Dijkstra e filas de tarefas.'
+  },
+  {
+    cat: 'Big-O', text: 'Qual é a complexidade espacial da recursão de Fibonacci sem memoização?',
+    code: `def fib(n):
+    if n <= 1: return n
+    return fib(n-1) + fib(n-2)`,
+    opts: ['O(1)', 'O(log n)', 'O(n)', 'O(2ⁿ)'],
+    ans: 2,
+    explain: 'A profundidade máxima da pilha de recursão é n (o caminho mais longo é fib(n) → fib(n-1) → ... → fib(1)). Complexidade espacial: O(n). Tempo: O(2ⁿ).'
+  },
+  {
+    cat: 'Algoritmos', text: 'Qual percurso numa árvore binária visita: esquerda → raiz → direita?',
+    code: null,
+    opts: ['Pré-ordem (Pre-order)', 'Em-ordem (In-order)', 'Pós-ordem (Post-order)', 'BFS (Largura)'],
+    ans: 1,
+    explain: 'In-order (Em-ordem): visita sub-árvore esquerda → raiz → sub-árvore direita. Em uma BST, isso retorna os elementos em ordem crescente!'
+  }
+];
+
+let current = 0, score = 0, correct = 0, wrong = 0, answered = false;
+let timer = null, timeLeft = 20, totalTime = 0, globalTimer = null;
+const SHUFFLE_QS = [...QUESTIONS].sort(() => Math.random() - 0.5);
+
+function startQuiz() {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('questionPanel').style.display = 'block';
+  current = 0; score = 0; correct = 0; wrong = 0; totalTime = 0;
+  globalTimer = setInterval(() => totalTime++, 1000);
+  showQuestion();
+}
+
+function showQuestion() {
+  if (current >= SHUFFLE_QS.length) { endQuiz(); return; }
+  answered = false;
+  const q = SHUFFLE_QS[current];
+  document.getElementById('qNum').textContent = `Questão ${current+1} / ${SHUFFLE_QS.length}`;
+  document.getElementById('qCat').textContent = q.cat;
+  document.getElementById('qText').textContent = q.text;
+  document.getElementById('progressBar').style.width = ((current) / SHUFFLE_QS.length * 100) + '%';
+  document.getElementById('hudQ').textContent = `${current+1}/${SHUFFLE_QS.length}`;
+  const codeEl = document.getElementById('qCode');
+  if (q.code) { codeEl.style.display = 'block'; codeEl.textContent = q.code; }
+  else { codeEl.style.display = 'none'; }
+  const letters = ['A', 'B', 'C', 'D'];
+  document.getElementById('options').innerHTML = q.opts.map((opt, i) =>
+    `<button class="option" onclick="answer(${i})" id="opt${i}">
+      <span class="opt-letter">${letters[i]}</span>${opt}
+    </button>`
+  ).join('');
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none';
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(timer);
+  timeLeft = 20;
+  updateTimerUI();
+  timer = setInterval(() => {
+    timeLeft--;
+    updateTimerUI();
+    if (timeLeft <= 0) { clearInterval(timer); timeOut(); }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  document.getElementById('hudTime').textContent = timeLeft + 's';
+  const bar = document.getElementById('timerBar');
+  bar.style.width = (timeLeft / 20 * 100) + '%';
+  bar.className = 'timer-bar' + (timeLeft <= 5 ? ' danger' : '');
+}
+
+function timeOut() {
+  if (answered) return;
+  answered = true;
+  wrong++;
+  const q = SHUFFLE_QS[current];
+  document.querySelectorAll('.option').forEach(o => o.classList.add('disabled'));
+  document.getElementById(`opt${q.ans}`).classList.add('correct');
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback-box wrong-fb';
+  fb.style.display = 'block';
+  fb.textContent = '⏱ Tempo esgotado! ' + q.explain;
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function answer(idx) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timer);
+  const q = SHUFFLE_QS[current];
+  document.querySelectorAll('.option').forEach(o => o.classList.add('disabled'));
+  const fb = document.getElementById('feedback');
+  if (idx === q.ans) {
+    correct++;
+    const bonus = timeLeft > 15 ? 3 : timeLeft > 10 ? 2 : timeLeft > 5 ? 1 : 0;
+    score += 10 + bonus;
+    document.getElementById(`opt${idx}`).classList.add('correct');
+    fb.className = 'feedback-box';
+    fb.innerHTML = `✓ Correto! ${bonus > 0 ? `+${bonus} bônus de velocidade! ` : ''}${q.explain}`;
+  } else {
+    wrong++;
+    document.getElementById(`opt${idx}`).classList.add('wrong');
+    document.getElementById(`opt${q.ans}`).classList.add('correct');
+    fb.className = 'feedback-box wrong-fb';
+    fb.innerHTML = `✗ Incorreto. ${q.explain}`;
+  }
+  fb.style.display = 'block';
+  document.getElementById('hudScore').textContent = score;
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function nextQuestion() {
+  current++;
+  if (current >= SHUFFLE_QS.length) endQuiz();
+  else showQuestion();
+}
+
+function endQuiz() {
+  clearInterval(globalTimer);
+  clearInterval(timer);
+  document.getElementById('questionPanel').style.display = 'none';
+  document.getElementById('resultPanel').style.display = 'block';
+  document.getElementById('progressBar').style.width = '100%';
+
+  const pct = Math.round(correct / SHUFFLE_QS.length * 100);
+  document.getElementById('resultScore').textContent = score;
+  document.getElementById('rCorrect').textContent = correct;
+  document.getElementById('rWrong').textContent = wrong;
+  document.getElementById('rTime').textContent = totalTime + 's';
+  document.getElementById('rPct').textContent = pct + '%';
+
+  let title, msg;
+  if (pct >= 90) { title = '🏆 Excelente!'; msg = 'Domínio impressionante! Você tem sólido conhecimento em algoritmos e estruturas de dados. Está pronto para desafios técnicos!'; }
+  else if (pct >= 70) { title = '🎯 Muito Bom!'; msg = 'Ótimo desempenho! Você entende bem os conceitos fundamentais. Continue praticando os pontos onde errou.'; }
+  else if (pct >= 50) { title = '📚 Bom progresso!'; msg = 'Você tem uma base sólida, mas ainda há espaço para crescer. Revise os tópicos de maior erro e pratique mais.'; }
+  else { title = '💪 Continue praticando!'; msg = 'Algoritmos e estruturas de dados exigem prática constante. Revise os conceitos de Big-O e estruturas básicas.'; }
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultMsg').textContent = msg;
+}
+
+function restartQuiz() {
+  document.getElementById('resultPanel').style.display = 'none';
+  document.getElementById('splash').style.display = 'block';
+  SHUFFLE_QS.sort(() => Math.random() - 0.5);
+}
+</script>
+</body>
+</html>

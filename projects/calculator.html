@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Expressões — Stack</title>
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#09090f; --surface:#0f0f1c; --card:#121220; --border:#1c1c2e;
+    --accent:#00f5a0; --blue:#00c8ff; --red:#ff6b6b; --yellow:#ffd700;
+    --text:#dcdcf0; --muted:#5a5a7a;
+    --mono:'Courier New', monospace;
+  }
+  body { background:var(--bg); color:var(--text); font-family:var(--mono); min-height:100vh; }
+  header {
+    background:var(--surface); border-bottom:1px solid var(--border);
+    padding:1.2rem 2rem;
+  }
+  header h1 { font-size:0.9rem; color:var(--accent); margin-bottom:0.3rem; }
+  header p { font-size:0.68rem; color:var(--muted); }
+  main { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; padding:1.5rem 2rem; }
+  @media(max-width:700px){ main { grid-template-columns:1fr; } }
+  h2 { font-size:0.75rem; color:var(--accent); letter-spacing:0.1em; margin-bottom:0.8rem; text-transform:uppercase; }
+  .panel { background:var(--surface); border:1px solid var(--border); padding:1.2rem; }
+
+  /* DISPLAY */
+  .display-area { margin-bottom:1rem; }
+  .display-infix {
+    background:var(--card); border:1px solid var(--border);
+    padding:0.6rem 0.8rem; font-size:1.1rem; color:var(--text);
+    margin-bottom:0.3rem; min-height:2.4rem;
+    display:flex; align-items:center;
+  }
+  .display-label { font-size:0.62rem; color:var(--muted); margin-bottom:0.3rem; }
+  .display-result {
+    background:var(--card); border:1px solid var(--border);
+    padding:0.6rem 0.8rem; font-size:1.5rem; font-weight:700;
+    color:var(--accent); min-height:2.8rem;
+    display:flex; align-items:center;
+  }
+  .display-result.error { color:var(--red); font-size:0.85rem; }
+
+  /* KEYPAD */
+  .keypad { display:grid; grid-template-columns:repeat(4,1fr); gap:0.4rem; }
+  .key {
+    padding:0.9rem 0.5rem; text-align:center; font-family:var(--mono);
+    font-size:0.9rem; background:var(--card); border:1px solid var(--border);
+    cursor:pointer; transition:all 0.15s; user-select:none;
+  }
+  .key:hover { background:#1a1a28; border-color:var(--muted); }
+  .key:active { transform:scale(0.95); }
+  .key.op { color:var(--yellow); border-color:rgba(255,215,0,0.2); }
+  .key.op:hover { background:rgba(255,215,0,0.08); border-color:var(--yellow); }
+  .key.eq { background:var(--accent); color:#09090f; font-weight:700; border-color:var(--accent); grid-column:span 2; }
+  .key.eq:hover { background:#00d988; }
+  .key.clr { color:var(--red); border-color:rgba(255,107,107,0.2); }
+  .key.clr:hover { background:rgba(255,107,107,0.08); border-color:var(--red); }
+  .key.del { color:var(--red); }
+  .key.par { color:var(--blue); border-color:rgba(0,200,255,0.2); }
+
+  /* STACK VISUALIZER */
+  .stack-vis { display:flex; flex-direction:column-reverse; gap:0.35rem; min-height:200px; }
+  .stack-frame {
+    background:var(--card); border:1px solid var(--border);
+    padding:0.55rem 0.8rem; font-size:0.82rem;
+    display:flex; justify-content:space-between; align-items:center;
+    animation:pushIn 0.2s ease;
+    transition:background 0.2s;
+  }
+  .stack-frame.top { border-color:var(--accent); background:rgba(0,245,160,0.06); }
+  .stack-frame .frame-val { color:var(--accent); font-size:1rem; }
+  .stack-frame .frame-idx { font-size:0.6rem; color:var(--muted); }
+  @keyframes pushIn {
+    from { opacity:0; transform:translateY(8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .stack-empty { font-size:0.68rem; color:var(--muted); text-align:center; padding:2rem 0; border:1px dashed var(--border); }
+  .stack-label { font-size:0.65rem; color:var(--muted); margin-top:0.5rem; text-align:center; }
+
+  /* STEPS LOG */
+  .steps-log { max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; }
+  .step-row {
+    background:var(--card); border:1px solid var(--border);
+    padding:0.45rem 0.7rem; font-size:0.66rem; line-height:1.5;
+  }
+  .step-row .step-op   { color:var(--yellow); }
+  .step-row .step-push { color:var(--accent); }
+  .step-row .step-pop  { color:var(--red); }
+  .step-row .step-res  { color:var(--blue); }
+  .step-row .step-info { color:var(--muted); }
+
+  /* EXAMPLES */
+  .examples { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:1rem; }
+  .ex-btn {
+    padding:0.3rem 0.7rem; font-family:var(--mono); font-size:0.62rem;
+    background:transparent; border:1px solid var(--border);
+    color:var(--muted); cursor:pointer; transition:all 0.2s;
+  }
+  .ex-btn:hover { color:var(--accent); border-color:var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>{ } Calculadora de Expressões — Stack Algorithm</h1>
+  <p>Avalia expressões matemáticas usando pilha (Shunting-Yard → RPN)</p>
+</header>
+<main>
+  <!-- CALCULADORA -->
+  <div>
+    <div class="panel">
+      <h2>Entrada</h2>
+      <div class="display-area">
+        <div class="display-label">Expressão:</div>
+        <div class="display-infix" id="displayInfix">_</div>
+        <div class="display-label" style="margin-top:0.5rem">Resultado:</div>
+        <div class="display-result" id="displayResult">0</div>
+      </div>
+      <div class="keypad">
+        <div class="key" onclick="press('7')">7</div>
+        <div class="key" onclick="press('8')">8</div>
+        <div class="key" onclick="press('9')">9</div>
+        <div class="key op" onclick="press('/')">÷</div>
+        <div class="key" onclick="press('4')">4</div>
+        <div class="key" onclick="press('5')">5</div>
+        <div class="key" onclick="press('6')">6</div>
+        <div class="key op" onclick="press('*')">×</div>
+        <div class="key" onclick="press('1')">1</div>
+        <div class="key" onclick="press('2')">2</div>
+        <div class="key" onclick="press('3')">3</div>
+        <div class="key op" onclick="press('-')">−</div>
+        <div class="key" onclick="press('0')">0</div>
+        <div class="key" onclick="press('.')">.</div>
+        <div class="key par" onclick="press('(')"> ( </div>
+        <div class="key op" onclick="press('+')">+</div>
+        <div class="key par" onclick="press(')')"> ) </div>
+        <div class="key del" onclick="deleteLast()">⌫</div>
+        <div class="key eq" onclick="calculate()">=</div>
+        <div class="key clr" onclick="clearAll()">C</div>
+      </div>
+      <div class="examples">
+        <span style="font-size:0.62rem;color:var(--muted);padding:0.3rem 0">Exemplos:</span>
+        <button class="ex-btn" onclick="setExpr('3+4*2')">3+4×2</button>
+        <button class="ex-btn" onclick="setExpr('(3+4)*2')">(3+4)×2</button>
+        <button class="ex-btn" onclick="setExpr('10/2+3')">10÷2+3</button>
+        <button class="ex-btn" onclick="setExpr('2*(3+4)-1')">2×(3+4)−1</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STACK VISUALIZER -->
+  <div style="display:flex;flex-direction:column;gap:1.5rem">
+    <div class="panel">
+      <h2>Pilha (Stack)</h2>
+      <div class="stack-vis" id="stackVis">
+        <div class="stack-empty">// Pilha vazia<br>// Pressione "=" para ver</div>
+      </div>
+      <div class="stack-label">← topo da pilha</div>
+    </div>
+    <div class="panel">
+      <h2>Passos de Avaliação</h2>
+      <div class="steps-log" id="stepsLog">
+        <div style="font-size:0.68rem;color:var(--muted);padding:0.5rem 0">// Execute uma expressão para ver os passos...</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+let expr = '';
+
+function updateDisplay() {
+  const el = document.getElementById('displayInfix');
+  el.textContent = expr.replace(/\*/g,'×').replace(/\//g,'÷') || '_';
+}
+
+function press(ch) { expr += ch; updateDisplay(); }
+function deleteLast() { expr = expr.slice(0, -1); updateDisplay(); }
+function clearAll() {
+  expr = '';
+  updateDisplay();
+  document.getElementById('displayResult').className = 'display-result';
+  document.getElementById('displayResult').textContent = '0';
+  document.getElementById('stackVis').innerHTML = '<div class="stack-empty">// Pilha vazia</div>';
+  document.getElementById('stepsLog').innerHTML = '<div style="font-size:0.68rem;color:var(--muted);padding:0.5rem 0">// Pronto para nova expressão...</div>';
+}
+function setExpr(e) { expr = e; updateDisplay(); }
+
+const PREC = {'+':1,'-':1,'*':2,'/':2};
+
+function tokenize(s) {
+  const tokens = [];
+  let i = 0;
+  while (i < s.length) {
+    if (/\d|\./.test(s[i])) {
+      let num = '';
+      while (i < s.length && /\d|\./.test(s[i])) num += s[i++];
+      tokens.push({ type:'num', val: parseFloat(num) });
+    } else if ('+-*/()'.includes(s[i])) {
+      tokens.push({ type: s[i]==='('||s[i]===')'?'paren':'op', val: s[i++] });
+    } else { i++; }
+  }
+  return tokens;
+}
+
+function shuntingYard(tokens) {
+  const output = [], ops = [];
+  for (const t of tokens) {
+    if (t.type === 'num') { output.push(t); }
+    else if (t.type === 'op') {
+      while (ops.length && ops[ops.length-1].type==='op' && PREC[ops[ops.length-1].val] >= PREC[t.val]) output.push(ops.pop());
+      ops.push(t);
+    } else if (t.val === '(') { ops.push(t); }
+    else if (t.val === ')') {
+      while (ops.length && ops[ops.length-1].val !== '(') output.push(ops.pop());
+      ops.pop();
+    }
+  }
+  while (ops.length) output.push(ops.pop());
+  return output;
+}
+
+function evalRPN(rpn, steps) {
+  const stack = [];
+  for (const t of rpn) {
+    if (t.type === 'num') {
+      stack.push(t.val);
+      steps.push({ type:'push', val: t.val, stack: [...stack] });
+    } else {
+      const b = stack.pop(), a = stack.pop();
+      let res;
+      if (t.val === '+') res = a + b;
+      else if (t.val === '-') res = a - b;
+      else if (t.val === '*') res = a * b;
+      else if (t.val === '/') res = a / b;
+      stack.push(res);
+      steps.push({ type:'op', op: t.val, a, b, res, stack: [...stack] });
+    }
+  }
+  return stack[0];
+}
+
+function calculate() {
+  if (!expr.trim()) return;
+  try {
+    const tokens = tokenize(expr);
+    const rpn    = shuntingYard(tokens);
+    const steps  = [];
+    const result = evalRPN(rpn, steps);
+
+    // Display result
+    const dispRes = document.getElementById('displayResult');
+    dispRes.className = 'display-result';
+    dispRes.textContent = Number.isInteger(result) ? result : result.toFixed(4);
+
+    // Animate stack visualization
+    showStackAnimation(steps, result);
+
+    // Show steps
+    showSteps(steps, result);
+
+  } catch(e) {
+    const dispRes = document.getElementById('displayResult');
+    dispRes.className = 'display-result error';
+    dispRes.textContent = 'Erro: expressão inválida';
+  }
+}
+
+function showStackAnimation(steps, final) {
+  const vis = document.getElementById('stackVis');
+  let i = 0;
+  function next() {
+    if (i >= steps.length) {
+      // show final state
+      renderStack(steps[steps.length-1]?.stack || [final], true);
+      return;
+    }
+    renderStack(steps[i].stack, i === steps.length-1);
+    i++;
+    setTimeout(next, 350);
+  }
+  next();
+}
+
+function renderStack(stack, isFinal) {
+  const vis = document.getElementById('stackVis');
+  if (!stack.length) {
+    vis.innerHTML = '<div class="stack-empty">// Pilha vazia</div>';
+    return;
+  }
+  vis.innerHTML = stack.map((v, i) => {
+    const isTop = i === stack.length - 1;
+    const display = Number.isInteger(v) ? v : v.toFixed(3);
+    return `<div class="stack-frame ${isTop?'top':''}">
+      <span class="frame-idx">[${i}]</span>
+      <span class="frame-val">${display}</span>
+      ${isTop ? '<span style="font-size:0.6rem;color:var(--accent)">← top</span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function showSteps(steps, final) {
+  const log = document.getElementById('stepsLog');
+  const opNames = {'+':'soma','-':'subtração','*':'multiplicação','/':'divisão'};
+  log.innerHTML = '';
+  steps.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'step-row';
+    if (s.type === 'push') {
+      div.innerHTML = `<span class="step-info">Passo ${i+1}: </span><span class="step-push">PUSH</span> <span style="color:var(--text)">${s.val}</span> <span class="step-info">→ pilha: [${s.stack.join(', ')}]</span>`;
+    } else {
+      const sym = s.op === '*' ? '×' : s.op === '/' ? '÷' : s.op;
+      div.innerHTML = `<span class="step-info">Passo ${i+1}: </span><span class="step-pop">POP</span> <span style="color:var(--text)">${s.a} ${sym} ${s.b}</span> <span class="step-op">= ${Number.isInteger(s.res)?s.res:s.res.toFixed(4)}</span> → <span class="step-push">PUSH</span> <span class="step-res">${Number.isInteger(s.res)?s.res:s.res.toFixed(4)}</span>`;
+    }
+    log.appendChild(div);
+  });
+  const finalDiv = document.createElement('div');
+  finalDiv.className = 'step-row';
+  finalDiv.innerHTML = `<span class="step-info">✓ Resultado final: </span><span class="step-res" style="font-size:0.8rem;font-weight:700">${Number.isInteger(final)?final:final.toFixed(4)}</span>`;
+  log.appendChild(finalDiv);
+  log.scrollTop = log.scrollHeight;
+}
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  if ('0123456789'.includes(e.key)) press(e.key);
+  else if ('+-*/'.includes(e.key)) press(e.key);
+  else if (e.key === '(') press('(');
+  else if (e.key === ')') press(')');
+  else if (e.key === '.') press('.');
+  else if (e.key === 'Enter') calculate();
+  else if (e.key === 'Backspace') deleteLast();
+  else if (e.key === 'Escape') clearAll();
+});
+</script>
+</body>
+</html>
