@@ -6,7 +6,7 @@
 
 ## 🚀 Acesse o Portfólio
 
-[![Portfolio](https://img.shields.io/badge/🌐_Ver_Portfólio-00f5a0?style=for-the-badge)](https://SEU-USUARIO.github.io/portfolio)
+[![Portfolio](https://img.shields.io/badge/🌐_Ver_Portfólio-00f5a0?style=for-the-badge)](https://osodrak.github.io/portfolio)
 
 ---
 
@@ -79,20 +79,6 @@ Quiz interativo sobre **Estruturas de Dados e Big-O Notation**.
 
 ---
 
-## ⚙️ Como Rodar Localmente
-
-```bash
-# Clone o repositório
-git clone https://github.com/SEU-USUARIO/portfolio.git
-
-# Entre na pasta
-cd portfolio
-
-# Abra no navegador (sem necessidade de servidor)
-# Basta abrir o arquivo index.html diretamente
-```
-
-> Não são necessárias instalações, servidores ou dependências. Basta abrir o `index.html` em qualquer navegador moderno.
 
 ---
 
@@ -113,4 +99,4 @@ Este projeto é de uso pessoal e portfólio. Sinta-se livre para usar como refer
 
 ---
 
-<p align="center">Feito com 💚 por <strong>Gabriel Cardoso Alves Rodrigues</strong></p>
+<p align="center">Feito por <strong>Gabriel Cardoso Alves Rodrigues</strong></p>
